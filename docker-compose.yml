@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      CORS_ORIGIN: http://localhost:3000
+      PYTHON_WORKER_URL: http://python-worker:8000
+    volumes:
+      - ./backend/src:/app/src
+      - ./expenses.db:/app/expenses.db
+    depends_on:
+      - python-worker
+    command: npm run dev
+
+  python-worker:
+    build:
+      context: ./python-worker
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: 8000
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    volumes:
+      - ./python-worker:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    image: node:18-alpine
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - backend
+
+volumes:
+  expenses:
