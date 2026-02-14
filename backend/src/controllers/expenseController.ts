@@ -3,19 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { allAsync, getAsync, runAsync } from '../db/database.js';
 import axios from 'axios';
 import fs from 'fs';
-import path from 'path';
 
-interface Expense {
-  id?: string;
-  amount: number;
-  category: string;
-  vendor: string;
-  date: string;
-  description: string;
-  photoUrl?: string;
-}
-
-export async function getAllExpenses(req: Request, res: Response) {
+export async function getAllExpenses(_req: Request, res: Response) {
   try {
     const expenses = await allAsync('SELECT * FROM expenses ORDER BY date DESC');
     res.json(expenses);
@@ -42,7 +31,7 @@ export async function createExpense(req: Request, res: Response) {
     );
 
     const expense = await getAsync('SELECT * FROM expenses WHERE id = ?', [id]);
-    res.status(201).json(expense);
+    return res.status(201).json(expense);
   } catch (error) {
     console.error('Error creating expense:', error);
     res.status(500).json({ error: 'Failed to create expense' });
@@ -60,7 +49,7 @@ export async function updateExpense(req: Request, res: Response) {
     );
 
     const expense = await getAsync('SELECT * FROM expenses WHERE id = ?', [id]);
-    res.json(expense);
+    return res.json(expense);
   } catch (error) {
     console.error('Error updating expense:', error);
     res.status(500).json({ error: 'Failed to update expense' });
@@ -72,7 +61,7 @@ export async function deleteExpense(req: Request, res: Response) {
     const { id } = req.params;
 
     await runAsync('DELETE FROM expenses WHERE id = ?', [id]);
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
     console.error('Error deleting expense:', error);
     res.status(500).json({ error: 'Failed to delete expense' });
